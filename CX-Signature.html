@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Email Signature</title>
+<style>
+    body {
+        display: flex;
+        font-family: Aptos, sans-serif;
+        background-color: white;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .form-container {
+        width: 40%;
+        padding-right: 20px;
+        border-right: 1px solid #ccc;
+    }
+    .signature-container {
+        width: 60%;
+        padding-left: 20px;
+    }
+    input, textarea, select, input[type='range'] {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 5px;
+        font-size: 14px;
+    }
+    button {
+        padding: 8px 15px;
+        background-color: #7030A0;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: white;
+    }
+    .dark-mode .form-container {
+        border-color: #555;
+    }
+</style>
+</head>
+<body>
+
+<div class="form-container">
+    <h3>تعديل التوقيع</h3>
+    <input type="text" id="name" placeholder="الاسم">
+    <input type="text" id="title" placeholder="المسمى الوظيفي">
+    <input type="text" id="phone" placeholder="رقم الموبايل">
+    <textarea id="address" placeholder="عنوان العمل"></textarea>
+
+    <label>المسافة بين العناصر: <span id="spacingValue">8px</span></label>
+    <input type="range" id="spacing" min="0" max="20" value="8" oninput="updateSpacing(this.value)">
+
+    <label>اللون الأساسي:</label>
+    <input type="color" id="accentColor" value="#7030A0" onchange="updateAccentColor(this.value)">
+
+    <label>تغيير نوع الخط:</label>
+    <select onchange="changeFont(this.value)">
+        <option value="Aptos">Aptos</option>
+        <option value="Arial">Arial</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="Cairo">Cairo</option>
+    </select>
+
+    <label>رفع صورة:</label>
+    <input type="file" accept="image/*" onchange="previewImage(this)">
+
+    <button onclick="updateSignature()">تحديث التوقيع</button>
+    <button onclick="copySignature()">نسخ التوقيع</button>
+    <button onclick="downloadHTML()">تحميل كـ HTML</button>
+    <button onclick="toggleDarkMode()">تبديل الوضع الليلي</button>
+</div>
+
+<div class="signature-container" id="signatureArea">
+    <p>Regards,</p>
+    <table border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+        <tr>
+            <td rowspan="2" style="padding-right: 15px;">
+                <img id="signatureImg" src="https://raw.githubusercontent.com/yasso50/cx-weekly-tips/refs/heads/main/We%20Logo.png" width="89" height="89">
+            </td>
+            <td style="border-bottom:1px solid #7030A0;">
+                <p><b><span id="sigName">Yassin Mohamed</span></b></p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><b><span id="sigTitle">CX</span></b><span> | Analytics Team Supervisor</span></p>
+                <p><b>Mobile:</b> <span id="sigPhone">01556562007</span></p>
+                <p><span id="sigAddress">B90, Smart Village Cairo- Alex Desert Road.</span></p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <a href="https://telecomegypt.sharepoint.com/sites/CXEducationZone" target="_blank">
+        <img src="https://raw.githubusercontent.com/yasso50/cx-weekly-tips/refs/heads/main/Signature_01.PNG" width="412" height="176" alt="Weekly CX Tip">
+    </a>
+</div>
+
+<script>
+function updateSignature() {
+    document.getElementById("sigName").innerText = document.getElementById("name").value || "Yassin Mohamed";
+    document.getElementById("sigTitle").innerText = document.getElementById("title").value || "CX";
+    document.getElementById("sigPhone").innerText = document.getElementById("phone").value || "01556562007";
+    document.getElementById("sigAddress").innerText = document.getElementById("address").value || "B90, Smart Village Cairo- Alex Desert Road.";
+    saveToLocalStorage();
+}
+
+function copySignature() {
+    const range = document.createRange();
+    const signature = document.getElementById("signatureArea");
+    range.selectNode(signature);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    try {
+        document.execCommand("copy");
+        alert("تم نسخ التوقيع إلى الحافظة!");
+    } catch (err) {
+        alert("حدث خطأ أثناء النسخ.");
+    }
+    selection.removeAllRanges();
+}
+
+function updateSpacing(val) {
+    document.getElementById("spacingValue").innerText = val + "px";
+    const paras = document.querySelectorAll('#signatureArea p');
+    paras.forEach(p => p.style.marginBottom = val + "px");
+}
+
+function updateAccentColor(color) {
+    document.querySelectorAll("#signatureArea td").forEach(td => {
+        td.style.borderBottomColor = color;
+    });
+    document.querySelectorAll("#signatureArea b").forEach(el => {
+        el.style.color = color;
+    });
+}
+
+function previewImage(input) {
+    const img = document.getElementById("signatureImg");
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function changeFont(font) {
+    document.getElementById("signatureArea").style.fontFamily = font;
+}
+
+function downloadHTML() {
+    const html = document.getElementById("signatureArea").outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'signature.html';
+    link.click();
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+}
+
+// حفظ البيانات محلياً
+function saveToLocalStorage() {
+    const data = {
+        name: document.getElementById("name").value,
+        title: document.getElementById("title").value,
+        phone: document.getElementById("phone").value,
+        address: document.getElementById("address").value
+    };
+    localStorage.setItem("signatureData", JSON.stringify(data));
+}
+
+// استرجاع البيانات عند التحميل
+document.addEventListener("DOMContentLoaded", function() {
+    const saved = JSON.parse(localStorage.getItem("signatureData"));
+    if (saved) {
+        document.getElementById("name").value = saved.name;
+        document.getElementById("title").value = saved.title;
+        document.getElementById("phone").value = saved.phone;
+        document.getElementById("address").value = saved.address;
+        updateSignature();
+    }
+    updateSpacing(document.getElementById("spacing").value);
+});
+</script>
+
+</body>
+</html>
