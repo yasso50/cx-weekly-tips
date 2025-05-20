@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Email Signature</title>
+<style>
+    body {
+        display: flex; /* تفعيل Flexbox */
+        font-family: Aptos, sans-serif;
+        background-color: white;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+        /* رجعنا الاتجاه الافتراضي: النموذج أولاً (يسار)، التوقيع ثانياً (يمين) */
+        flex-direction: row; 
+    }
+    .form-container {
+        width: 55%; /* عرض الأوبشنات 55% */
+        /* رجعنا Order: 1 عشان يظهر على اليسار حسب ترتيب الـ HTML */
+        order: 1; 
+        /* ضبط الـ padding والـ border عشان يكون مناسب لكونه على اليسار */
+        padding-right: 20px;
+        padding-left: 0;
+        border-right: 1px solid #ccc;
+        border-left: none;
+    }
+    .signature-container {
+        width: 45%; /* عرض التوقيع 45% */
+        /* رجعنا Order: 2 عشان يظهر على اليمين حسب ترتيب الـ HTML */
+        order: 2; 
+        /* ضبط الـ padding عشان يكون مناسب لكونه على اليمين */
+        padding-left: 20px;
+        padding-right: 0;
+    }
+    input, textarea, select, input[type='range'] {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 5px;
+        font-size: 14px;
+    }
+    button {
+        padding: 8px 15px;
+        background-color: #7030A0;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: white;
+    }
+    .dark-mode .form-container {
+        border-color: #555;
+    }
+    /* ستايلات مربعات اختيار الألوان */
+    input[type='color'] {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid #ccc;
+        vertical-align: middle;
+        cursor: pointer;
+        margin-bottom: 5px;
+    }
+    .color-option-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        /* رجعنا الاتجاه الافتراضي داخل السطر (الـ label يسار، مربع اللون يمين) */
+        flex-direction: row; 
+        justify-content: flex-start; /* لضمان محاذاة كل سطر لليسار */
+    }
+    .color-option-row label {
+        flex-grow: 1; /* رجعنا الـ flex-grow للـ label عشان ياخد المساحة المتاحة */
+        margin-bottom: 0;
+        /* تعديل الـ padding ليتناسب مع الاتجاه الجديد */
+        padding-right: 10px; 
+        padding-left: 0;
+        text-align: left; /* محاذاة النص لليسار */
+    }
+    /* ستايلات ألوان افتراضية للتوقيع (ستُستبدل بـ inline styles بواسطة JavaScript) */
+    #sigName { color: #7030A0; }
+    #sigTitle { color: #7030A0; }
+    #sigPhone { color: #7030A0; }
+    #sigEmail { color: #7030A0; }
+    .signature-border-bottom { border-bottom: 1px solid #7030A0; }
+</style>
+</head>
+<body>
+
+<div class="form-container">
+    <h3>Edit Signature</h3>
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="title" placeholder="Job Title">
+    <input type="text" id="phone" placeholder="Mobile Number">
+    <input type="text" id="email" placeholder="Email Address">
+    <textarea id="address" placeholder="Work Address"></textarea>
+
+    <label>Spacing between elements: <span id="spacingValue">8px</span></label>
+    <input type="range" id="spacing" min="0" max="20" value="8" oninput="updateSpacing(this.value)">
+
+    <label>Font Size: <span id="fontSizeValue">14px</span></label>
+    <input type="range" id="fontSize" min="10" max="20" value="14" oninput="changeFontSize(this.value)">
+
+    <label>Change Font:</label>
+    <select onchange="changeFont(this.value)">
+        <option value="Aptos">Aptos</option>
+        <option value="Arial">Arial</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="Cairo">Cairo</option>
+    </select>
+
+    <div class="color-option-row">
+        <label for="nameColor">Name Color:</label>
+        <input type="color" id="nameColor" value="#7030A0" onchange="updateColors()">
+    </div>
+    <div class="color-option-row">
+        <label for="titleColor">Job Title Color:</label>
+        <input type="color" id="titleColor" value="#7030A0" onchange="updateColors()">
+    </div>
+    <div class="color-option-row">
+        <label for="phoneColor">Mobile Number Color:</label>
+        <input type="color" id="phoneColor" value="#7030A0" onchange="updateColors()">
+    </div>
+    <div class="color-option-row">
+        <label for="emailColor">Email Address Color:</label>
+        <input type="color" id="emailColor" value="#7030A0" onchange="updateColors()">
+    </div>
+    <div class="color-option-row">
+        <label for="borderColor">Separator Line Color:</label>
+        <input type="color" id="borderColor" value="#7030A0" onchange="updateColors()">
+    </div>
+    
+    <label for="imageUpload">Upload Image:</label>
+    <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(this)">
+    
+    <button onclick="updateSignature()">Update Signature</button>
+    <button onclick="copySignature()">Copy Signature</button>
+    <button onclick="downloadHTML()">Download as HTML</button>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+</div>
+
+<div class="signature-container" id="signatureArea">
+    <p>Regards,</p>
+    <table border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+        <tr>
+            <td rowspan="2" style="padding-right: 15px;">
+                <img id="signatureImg" src="https://raw.githubusercontent.com/yasso50/cx-weekly-tips/refs/heads/main/We%20Logo.png" width="89" height="89">
+            </td>
+            <td class="signature-border-bottom">
+                <p><b><span id="sigName">Yassin Mohamed</span></b></p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p><b><span id="sigTitle">CX | Analytics Team Supervisor</span></b></p>
+                <p><b>Mobile:</b> <span id="sigPhone">01556562007</span></p>
+                <p><b>Email:</b> <span id="sigEmail">your.email@example.com</span></p>
+                <p><span id="sigAddress">B90, Smart Village Cairo- Alex Desert Road.</span></p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <a href="https://telecomegypt.sharepoint.com/sites/CXEducationZone" target="_blank">
+        <img src="https://raw.githubusercontent.com/yasso50/cx-weekly-tips/refs/heads/main/Signature_01.PNG" width="412" height="176" alt="Weekly CX Tip">
+    </a>
+</div>
+
+<script>
+function updateSignature() {
+    document.getElementById("name").value = document.getElementById("name").value.trim();
+    document.getElementById("title").value = document.getElementById("title").value.trim();
+    document.getElementById("phone").value = document.getElementById("phone").value.trim();
+    document.getElementById("email").value = document.getElementById("email").value.trim();
+    document.getElementById("address").value = document.getElementById("address").value.trim();
+
+    document.getElementById("sigName").innerText = document.getElementById("name").value || "Yassin Mohamed";
+    document.getElementById("sigTitle").innerText = document.getElementById("title").value || "CX | Analytics Team Supervisor";
+    document.getElementById("sigPhone").innerText = document.getElementById("phone").value || "01556562007";
+    document.getElementById("sigEmail").innerText = document.getElementById("email").value || "your.email@example.com";
+    document.getElementById("sigAddress").innerText = document.getElementById("address").value || "B90, Smart Village Cairo- Alex Desert Road.";
+    
+    updateColors();
+    saveToLocalStorage();
+}
+
+function copySignature() {
+    const range = document.createRange();
+    const signature = document.getElementById("signatureArea");
+    range.selectNode(signature);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    try {
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+    } catch (err) {
+        alert("Error copying to clipboard!");
+    }
+    selection.removeAllRanges();
+}
+
+function updateSpacing(val) {
+    document.getElementById("spacingValue").innerText = val + "px";
+    const paras = document.querySelectorAll('#signatureArea p');
+    paras.forEach(p => p.style.marginBottom = val + "px");
+}
+
+function updateColors() {
+    document.getElementById("sigName").style.color = document.getElementById("nameColor").value;
+    document.getElementById("sigTitle").style.color = document.getElementById("titleColor").value;
+    document.getElementById("sigPhone").style.color = document.getElementById("phoneColor").value;
+    document.getElementById("sigEmail").style.color = document.getElementById("emailColor").value;
+    document.querySelector(".signature-border-bottom").style.borderBottomColor = document.getElementById("borderColor").value;
+    saveToLocalStorage();
+}
+
+function changeFontSize(val) {
+    document.getElementById("fontSizeValue").innerText = val + "px";
+    const textElements = document.querySelectorAll('#signatureArea p, #signatureArea span, #signatureArea b');
+    textElements.forEach(el => el.style.fontSize = val + "px");
+}
+
+function previewImage(input) {
+    const img = document.getElementById("signatureImg");
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function changeFont(font) {
+    const textElements = document.querySelectorAll('#signatureArea p, #signatureArea span, #signatureArea b');
+    textElements.forEach(el => el.style.fontFamily = font);
+    document.querySelector('#signatureArea table').style.fontFamily = font;
+    saveToLocalStorage();
+}
+
+function downloadHTML() {
+    const html = document.getElementById("signatureArea").outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'signature.html';
+    link.click();
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+}
+
+// حفظ البيانات محلياً
+function saveToLocalStorage() {
+    const data = {
+        name: document.getElementById("name").value,
+        title: document.getElementById("title").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        address: document.getElementById("address").value,
+        fontSize: document.getElementById("fontSize").value,
+        fontFamily: document.querySelector('select').value,
+        nameColor: document.getElementById("nameColor").value,
+        titleColor: document.getElementById("titleColor").value,
+        phoneColor: document.getElementById("phoneColor").value,
+        emailColor: document.getElementById("emailColor").value,
+        borderColor: document.getElementById("borderColor").value
+    };
+    localStorage.setItem("signatureData", JSON.stringify(data));
+}
+
+// استرجاع البيانات عند التحميل
+document.addEventListener("DOMContentLoaded", function() {
+    const saved = JSON.parse(localStorage.getItem("signatureData"));
+    if (saved) {
+        document.getElementById("name").value = saved.name;
+        document.getElementById("title").value = saved.title;
+        document.getElementById("phone").value = saved.phone;
+        document.getElementById("email").value = saved.email;
+        document.getElementById("address").value = saved.address;
+        document.getElementById("fontSize").value = saved.fontSize || 14;
+        document.querySelector('select').value = saved.fontFamily || 'Aptos';
+        document.getElementById("nameColor").value = saved.nameColor || '#7030A0';
+        document.getElementById("titleColor").value = saved.titleColor || '#7030A0';
+        document.getElementById("phoneColor").value = saved.phoneColor || '#7030A0';
+        document.getElementById("emailColor").value = saved.emailColor || '#7030A0';
+        document.getElementById("borderColor").value = saved.borderColor || '#7030A0';
+        
+        updateSignature();
+    } else {
+        updateColors();
+    }
+    updateSpacing(document.getElementById("spacing").value);
+    changeFontSize(document.getElementById("fontSize").value);
+    changeFont(document.querySelector('select').value);
+});
+</script>
+
+</body>
+</html>
